@@ -3,99 +3,115 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('extension.create', async (uri: vscode.Uri) => {
-		if (!uri.fsPath) {
-			vscode.window.showErrorMessage('Please select a folder first.');
-			return;
-		}
+  let disposable = vscode.commands.registerCommand('extension.create', async (uri: vscode.Uri) => {
+    if (!uri.fsPath) {
+      vscode.window.showErrorMessage('Please select a folder first.');
+      return;
+    }
 
 
-		const input = await vscode.window.showInputBox({
-			prompt: 'Enter feature name to create (snake_case)',
-			placeHolder: 'clean_arch'
-		});
+    const input = await vscode.window.showInputBox({
+      prompt: 'Enter feature name to create (snake_case)',
+      placeHolder: 'clean_arch'
+    });
 
-		if (!input) {
-			vscode.window.showErrorMessage('No feature name provided.');
-			return;
-		}
+    if (!input) {
+      vscode.window.showErrorMessage('No feature name provided.');
+      return;
+    }
 
-		const rootPath = `${uri.fsPath}/${input}`;
+    const rootPath = `${uri.fsPath}/${input}`;
 
-		// Convert snake_case to PascalCase for class names
-		const featureName = input.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+    // Convert snake_case to PascalCase for class names
+    const featureName = input.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
 
-		const foldersToCreate = [
-			'data/data_source',
-			'data/models',
-			'data/repository',
-			'domain/entities',
-			'domain/repository',
-			'domain/usecases',
-			'presentation/bloc',
-			'presentation/page',
-			'presentation/widgets'
-		];
+    const data = 'data';
+    const dataSources = `${data}/data_sources`;
+    const models = `${data}/models`;
+    const repositoriesData = `${data}/repositories`;
 
-		const filesToCreate = [
-			{ path: `data/data_source/${input}_data_source.dart`, content: `${_createDataSource(featureName)}` },
-			{ path: `data/data_source/${input}_data_source_impl.dart`, content: `${_createDataSourceImpl(input, featureName)}` },
-			{ path: `data/models/${input}_model.dart`, content: `${_createModel(featureName)}` },
-			{ path: `data/repository/${input}_repository_impl.dart`, content: `${_createRepositoryImpl(input, featureName)}` },
-			{ path: `domain/entities/${input}.dart`, content: `class ${featureName} {}` },
-			{ path: `domain/repository/${input}_repository.dart`, content: `${_createRepository(featureName)}` },
-			{ path: `presentation/bloc/${input}_cubit.dart`, content: `${_createCubit(input, featureName)}` },
-			{ path: `presentation/bloc/${input}_state.dart`, content: `${_createState(input, featureName)}` },
-			{ path: `presentation/page/${input}_page.dart`, content: `${_createPage(featureName)}` },
-		];
+    const domain = 'domain';
+    const entities = `${domain}/entities`;
+    const repositoriesDomain = `${domain}/repositories`;
+    const usecases = `${domain}/usecases`;
 
-		try {
-			foldersToCreate.forEach(folder => {
-				const folderPath = path.join(rootPath, folder);
-				if (!fs.existsSync(folderPath)) {
-					fs.mkdirSync(folderPath, { recursive: true });
-				}
-			});
+    const presentation = 'presentation';
+    const bloc = `${presentation}/bloc`;
+    const page = `${presentation}/page`;
+    const widgets = `${presentation}/widgets`;
 
-			filesToCreate.forEach(file => {
-				const filePath = path.join(rootPath, file.path);
-				if (!fs.existsSync(filePath)) {
-					fs.writeFileSync(filePath, file.content);
-				}
-			});
 
-			vscode.window.showInformationMessage('Clean architecture structure created successfully!');
-		} catch (error) {
-			vscode.window.showErrorMessage('Failed to create project structure');
-		}
-	});
+    const foldersToCreate = [
+      dataSources,
+      models,
+      repositoriesData,
+      entities,
+      repositoriesDomain,
+      usecases,
+      bloc,
+      page,
+      widgets,
+    ];
 
-	context.subscriptions.push(disposable);
+    const filesToCreate = [
+      { path: `${dataSources}/${input}_data_source.dart`, content: `${_createDataSource(featureName)}` },
+      { path: `${dataSources}/${input}_data_source_impl.dart`, content: `${_createDataSourceImpl(input, featureName)}` },
+      { path: `${models}/${input}_model.dart`, content: `${_createModel(featureName)}` },
+      { path: `${repositoriesData}/${input}_repository_impl.dart`, content: `${_createRepositoryImpl(input, featureName)}` },
+      { path: `${entities}/${input}.dart`, content: `class ${featureName} {}` },
+      { path: `${repositoriesDomain}/${input}_repository.dart`, content: `${_createRepository(featureName)}` },
+      { path: `${bloc}/${input}_cubit.dart`, content: `${_createCubit(input, featureName)}` },
+      { path: `${bloc}/${input}_state.dart`, content: `${_createState(input, featureName)}` },
+      { path: `${page}/${input}_page.dart`, content: `${_createPage(featureName)}` },
+    ];
+
+    try {
+      foldersToCreate.forEach(folder => {
+        const folderPath = path.join(rootPath, folder);
+        if (!fs.existsSync(folderPath)) {
+          fs.mkdirSync(folderPath, { recursive: true });
+        }
+      });
+
+      filesToCreate.forEach(file => {
+        const filePath = path.join(rootPath, file.path);
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, file.content);
+        }
+      });
+
+      vscode.window.showInformationMessage('Clean architecture structure created successfully!');
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to create project structure');
+    }
+  });
+
+  context.subscriptions.push(disposable);
 }
 
 export function deactivate() { }
 
 function _createDataSource(name: String): String {
-	return `abstract interface class ${name}DataSource {}`;
+  return `abstract interface class ${name}DataSource {}`;
 }
 
 function _createDataSourceImpl(file: String, name: String): String {
-	return `import '${file}_data_source.dart';
+  return `import '${file}_data_source.dart';
 	
 class ${name}DataSourceImpl implements ${name}DataSource {}`;
 }
 
 function _createModel(name: String): String {
-	return `class ${name}Model {}`;
+  return `class ${name}Model {}`;
 }
 
 function _createRepository(name: String): String {
-	return `abstract interface class ${name}Repository {}`;
+  return `abstract interface class ${name}Repository {}`;
 }
 
 function _createRepositoryImpl(file: String, name: String): String {
-	return `import '../../domain/repository/${file}_repository.dart';
-import '../data_source/${file}_data_source.dart';
+  return `import '../../domain/repositories/${file}_repository.dart';
+import '../data_sources/${file}_data_source.dart';
 
 class ${name}RepositoryImpl implements ${name}Repository{
   final ${name}DataSource _dataSource;
@@ -105,7 +121,7 @@ class ${name}RepositoryImpl implements ${name}Repository{
 }
 
 function _createPage(name: String): String {
-	return `import 'package:flutter/material.dart';
+  return `import 'package:flutter/material.dart';
 
 class ${name}Page extends StatelessWidget {
   const ${name}Page({super.key});
@@ -123,7 +139,8 @@ class ${name}Page extends StatelessWidget {
 }
 
 function _createCubit(file: String, name: string): String {
-	return `import 'package:bloc/bloc.dart';
+  return `import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/${file}.dart';
@@ -137,10 +154,12 @@ class ${name}Cubit extends Cubit<${name}State> {
 }
 
 function _createState(file: String, name: string): String {
-	return `part of '${file}_cubit.dart';
+  return `part of '${file}_cubit.dart';
 
 @immutable
-sealed class ${name}State {
+sealed class ${name}State extends Equatable {
+  const ${name}State();
+
   T when<T>({
     required T Function() initial,
     required T Function() loading,
@@ -151,6 +170,8 @@ sealed class ${name}State {
       return initial();
     } else if (this is ${name}Loading) {
       return loading();
+    } else if (this is ${name}Success) {
+      return success((this as ${name}Success).${name[0].toLowerCase() + name.slice(1)});
     } else if (this is ${name}Error) {
       return error((this as ${name}Error).message);
     }
@@ -191,6 +212,9 @@ sealed class ${name}State {
       orElse: () => null,
     );
   }
+
+  @override
+  List<Object?> get props => [];
 }
 
 final class ${name}Initial extends ${name}State {}
@@ -200,13 +224,19 @@ final class ${name}Loading extends ${name}State {}
 final class ${name}Success extends ${name}State {
   final ${name} ${name[0].toLowerCase() + name.slice(1)};
 
-  ${name}Success({required this.${name[0].toLowerCase() + name.slice(1)}});
+  const ${name}Success({required this.${name[0].toLowerCase() + name.slice(1)}});
+
+  @override
+  List<Object?> get props => [${name[0].toLowerCase() + name.slice(1)}];
 }
 
 final class ${name}Error extends ${name}State {
   final String message;
 
-  ${name}Error({required this.message});
+  const ${name}Error({required this.message});
+
+  @override
+  List<Object?> get props => [message];
 }
 `;
 }
